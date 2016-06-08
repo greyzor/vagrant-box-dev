@@ -66,13 +66,32 @@ Vagrant.configure(2) do |config|
   #####################################
   #### Provisioning
   #####################################
-  # Install docker
+  #--------------------------
+  # Provision docker
+  #--------------------------
   config.vm.provision "docker"
+
+  #--------------------------
+  # Provision vagrant
+  #--------------------------
   # Install vagrant
   config.vm.provision "shell", inline: <<-SHELL
     sudo apt-get update
     test ! -e vagrant_1.8.1_x86_64.deb && wget https://releases.hashicorp.com/vagrant/1.8.1/vagrant_1.8.1_x86_64.deb
     dpkg -i vagrant_1.8.1_x86_64.deb
     vagrant -v
+    echo "Provisioned vagrant."
+  SHELL
+
+  #--------------------------
+  # Provision other dev tools
+  #--------------------------
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get install -y vim htop
+    apt-get install zsh git-core
+    sudo su vagrant -c "wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh"
+    chsh -s $(which zsh) vagrant  # make zsh the default shell
+                                  #  for vagrant user.
+    cp /tmp/vagrant_dir/.zshrc /home/vagrant/.zshrc
   SHELL
 end
