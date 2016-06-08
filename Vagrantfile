@@ -37,11 +37,30 @@ Vagrant.configure(2) do |config|
   end
 
   #####################################
-  #### Providers
+  #### Provider
   #####################################
   config.vm.provider "virtualbox" do |vb|
-    # Customize the amount of memory on the VM:
-    vb.memory = "2048"
+    host = RbConfig::CONFIG['host_os']
+    #----------------------------------
+    # System resources configuration:
+    #----------------------------------
+    #   - give me 25% of system memory.
+    #   - give me all cpu cores available on host.
+    #----------------------------------
+    if host =~ /darwin/
+      cpus = `sysctl -n hw.ncpu`.to_i
+      # sysctl returns Bytes and we need to convert to MB
+      mem = `sysctl -n hw.memsize`.to_i / 1024 / 1024 / 4
+    elsif host =~ /linux/
+      cpus = `nproc`.to_i
+      # meminfo shows KB and we need to convert to MB
+      mem = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024 / 4
+    else # sorry Windows folks, I can't help you
+      cpus = 2
+      mem = 1024
+    end
+    vb.customize ["modifyvm", :id, "--memory", mem]
+    vb.customize ["modifyvm", :id, "--cpus", cpus]
   end
 
   #####################################
